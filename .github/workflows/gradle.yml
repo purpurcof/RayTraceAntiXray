@@ -32,7 +32,7 @@ jobs:
       - name: Build Shadow Jar
         run: |
           chmod +x gradlew
-          ./gradlew clean shadowJar
+          ./gradlew clean build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
