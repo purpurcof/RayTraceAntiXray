@@ -29,7 +29,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Shadow Jar
+      - name: Build Plugin
         run: |
           chmod +x gradlew
           ./gradlew clean build
@@ -37,8 +37,6 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Plugin-Jar
-          path: |
-            build/libs/*.jar
-            target/*.jar
+          name: RayTraceAntiXray-Plugin
+          path: build/libs/*.jar
           if-no-files-found: error
