@@ -21,6 +21,19 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class WorldListener implements Listener {
+
+    private static final Field CHUNK_PACKET_BLOCK_CONTROLLER_FIELD;
+
+    static {
+        try {
+            Field field = Level.class.getDeclaredField("chunkPacketBlockController");
+            field.setAccessible(true);
+            CHUNK_PACKET_BLOCK_CONTROLLER_FIELD = field;
+        } catch (NoSuchFieldException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     private final RayTraceAntiXray plugin;
 
     public WorldListener(RayTraceAntiXray plugin) {
@@ -54,7 +67,7 @@ public final class WorldListener implements Listener {
             ServerLevel serverLevel = ((CraftWorld) world).getHandle();
             ChunkPacketBlockControllerAntiXray controller = new ChunkPacketBlockControllerAntiXray(
                     plugin,
-                    ((CraftWorld) world).getHandle().chunkPacketBlockController,
+                    serverLevel.chunkPacketBlockController,
                     rayTraceThirdPerson,
                     rayTraceDistance,
                     rehideBlocks,
@@ -67,24 +80,20 @@ public final class WorldListener implements Listener {
             );
 
             try {
-                Field field = Level.class.getDeclaredField("chunkPacketBlockController");
-                field.setAccessible(true);
-                field.set(serverLevel, controller);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+                CHUNK_PACKET_BLOCK_CONTROLLER_FIELD.set(serverLevel, controller);
+            } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
     public static void handleUnload(RayTraceAntiXray plugin, World w) {
-        if (((CraftWorld) w).getHandle().chunkPacketBlockController instanceof ChunkPacketBlockControllerAntiXray) {
-            ChunkPacketBlockController oldController = ((ChunkPacketBlockControllerAntiXray) ((CraftWorld) w).getHandle().chunkPacketBlockController).getOldController();
-
+        ServerLevel serverLevel = ((CraftWorld) w).getHandle();
+        if (serverLevel.chunkPacketBlockController instanceof ChunkPacketBlockControllerAntiXray antiXray) {
+            ChunkPacketBlockController oldController = antiXray.getOldController();
             try {
-                Field field = Level.class.getDeclaredField("chunkPacketBlockController");
-                field.setAccessible(true);
-                field.set(((CraftWorld) w).getHandle(), oldController);
-            } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+                CHUNK_PACKET_BLOCK_CONTROLLER_FIELD.set(serverLevel, oldController);
+            } catch (IllegalAccessException e) {
                 BukkitUtil.sneakyThrow(e);
             }
         }
